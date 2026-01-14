@@ -1,5 +1,5 @@
 from db.index import HashIndex
-class table:
+class Table:
     def __init__(self, name, columns, primary_key, emitter):
         self.name = name
         self.columns = columns
