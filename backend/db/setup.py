@@ -20,6 +20,6 @@ def setup_database():
     # Initialize Indexes
     db.get_table("tasks").create_index("status")
     db.get_table("tasks").create_index("project_id")
-    
+
     executor = Executor(db)
     return db, executor

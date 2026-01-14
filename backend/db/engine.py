@@ -10,6 +10,11 @@ class Database:
         table = Table(name, columns, primary_key, self.emitter)
         self.tables[name] = table
         return table
+    
+    def get_table(self, name):
+        if name not in self.tables:
+            raise ValueError(f"Table '{name}' not found.")
+        return self.tables[name]
 
     def table(self, name):
-        return self.tables[name]
+        return self.get_table(name)

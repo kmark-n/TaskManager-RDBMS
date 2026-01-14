@@ -11,6 +11,6 @@ while True:
     try:
         tree = parser.parse(sql)
         result = executor.execute(tree)
-        print(result)
+        print("Result:", result)
     except Exception as e:
         print("Error:", e)
