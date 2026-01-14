@@ -3,7 +3,7 @@ from db.setup import setup_database
 from db.parser import parser
 
 
-app = fastAPI()
+app = FastAPI()
 db, executor = setup_database()
 
 
