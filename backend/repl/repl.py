@@ -2,7 +2,7 @@ from db.parser import parser
 from db.setup import setup_database
 
 
-db, executor = setup_database()
+executor = setup_database()
 
 while True:
     sql = input("MiniDB > ")
