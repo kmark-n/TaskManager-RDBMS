@@ -1,3 +1,4 @@
+from db.index import HashIndex
 class Table:
     def __init__(self, name, columns, primary_key, emitter):
         self.name = name

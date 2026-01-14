@@ -1,29 +1,8 @@
-from db.engine import Database
 from db.parser import parser
-from db.executor import Executor
+from db.setup import setup_database
 
-db = Database()
 
-#projects table
-projects = db.create_table(
-    name="projects",
-    columns=["id", "name"],
-    primary_key="id"
-)
-
-projects.create_index("id")
-projects.create_index("name")
-
-#tasks table
-tasks = db.create_table(
-    name="tasks",
-    columns=["id", "title", "status", "project_id"],
-    primary_key="id"
-)
-tasks.create_index("status")
-tasks.create_index("project_id")
-
-executor = Executor(db)
+db, executor = setup_database()
 
 while True:
     sql = input("MiniDB > ")
