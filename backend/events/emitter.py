@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 
-class EventEmitter:
+class eventEmitter:
     def __init__(self):
         self.events: List[Dict[str, Any]] = []
 
