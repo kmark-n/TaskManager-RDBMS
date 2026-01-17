@@ -26,6 +26,7 @@ through a live UI.
 ---
 
 ## 🏗️ Architecture Overview
+docs\TaskManager.drawio.png
 
 
 ### Core Components
