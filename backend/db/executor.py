@@ -1,4 +1,5 @@
 from lark import Tree, Token
+from sqlalchemy import table
 
 class Executor:
     def __init__(self, db):
@@ -16,28 +17,64 @@ class Executor:
 
     def _get_value(self, val_node):
         """Helper to extract raw Python values from Lark nodes."""
-        # val_node is likely a Tree with data='number' or 'string'
-        inner_val = val_node.children[0] # This is the Token
+        # Safety check for empty nodes
+        if not val_node or not val_node.children:
+            return None
+
+        # Access the raw Token inside the node
+        inner_val = val_node.children[0]
         
+        # 1. Handle explicit Numeric types (keeps IDs as integers)
         if val_node.data == "number":
-            return int(inner_val)
+            try:
+                return int(inner_val)
+            except ValueError:
+                return float(inner_val)
+                
+        # 2. Handle String types (cleans up "Build" -> Build)
         if val_node.data == "string":
             return str(inner_val).strip("'").strip('"')
-        return str(inner_val)
+
+        # 3. Handle NULL/None (Case-insensitive check for the keyword NULL)
+        raw_str = str(inner_val)
+        if raw_str.upper() == "NULL":
+            return None
+            
+        return raw_str
 
     def _insert(self, tree):
-        # tree.children[0] is the NAME token for the table
-        table_name = tree.children[0].value
-        table = self.db.get_table(table_name) # Use the method we fixed earlier
+    # 1. FIXED: Extract the table name from the first child of the insert tree
+    # Depending on your grammar, this is usually tree.children[0]
+        table_name = str(tree.children[0].value).lower()
         
-        # tree.children[1] is the 'values' tree
-        values_node = tree.children[1]
-        values = [self._get_value(v) for v in values_node.children]
+        print(f"DEBUG: Attempting to insert into table: '{table_name}'")
         
-        # Zip column names with the processed values
-        row = dict(zip(table.columns, values))
-        table.insert(row)
-        return {"status": "ok", "row": row}
+        table = self.db.get_table(table_name)
+        if not table:
+            print(f"ERROR: Table '{table_name}' not found in database!")
+            return {"status": "error", "message": f"Table '{table_name}' not found"}
+
+        # 2. Extract values from the AST
+        values_node = next(tree.find_data("values"))
+        values = [self._get_value(child) for child in values_node.children]
+        print(f"DEBUG: Parsed values from SQL: {values}")
+
+        # 3. Map values to columns
+        # If the user didn't provide an ID, we map to everything except the first column (id)
+        if len(values) == len(table.columns) - 1:
+            row = dict(zip(table.columns[1:], values))
+        else:
+            row = dict(zip(table.columns, values))
+        
+        print(f"DEBUG: Final row dictionary created: {row}")
+
+        # 4. Perform the actual insert
+        inserted_row = table.insert(row)
+        
+        # Verify the table size immediately after
+        print(f"DEBUG: Table '{table_name}' now contains {len(table.rows)} rows.")
+
+        return {"status": "ok", "row": inserted_row}
 
     def _select(self, tree):
         # In select: columns is children[0], NAME is children[1]
@@ -45,6 +82,8 @@ class Executor:
         left_table = self.db.get_table(left_table_name)
 
         results = left_table.scan()
+        print(f"--- ENGINE DATA DUMP ({left_table_name}) ---")
+        print(f"Raw rows in memory: {results}")
 
         for child in tree.children:
             if isinstance(child, Tree) and child.data == "join":
@@ -63,7 +102,7 @@ class Executor:
                             combined = {**l_row, **r_row}
                             joined_results.append(combined)
                 results = joined_results
-
+        print(f"DEBUG: Selecting from {left_table_name}, found {len(results)} rows")
         return results
 
     def _update(self, tree):
