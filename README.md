@@ -38,8 +38,6 @@ through a live UI.
 
 ---
 
-## 🖥️ Web Application UI
-
 
 
 ### Task Manager (Left Panel)
