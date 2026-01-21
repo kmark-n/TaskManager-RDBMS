@@ -1,23 +1,30 @@
 from lark import Lark
 
 sql_grammar = """
-?start: insert | select | update
+?start: insert | select | update | delete
 
 insert: "INSERT" "INTO" NAME "VALUES" "(" values ")"
-select: "SELECT" columns "FROM" NAME  join? where?
-update: "UPDATE" NAME "SET" assignment where?
-join: "JOIN" NAME "ON" NAME "." NAME "=" NAME "." NAME
+select: "SELECT" columns "FROM" NAME join? where_clause?
+update: "UPDATE" NAME "SET" assignments where_clause?
+delete: "DELETE" "FROM" NAME where_clause
 
 columns: "*" | NAME ("," NAME)*
-col_name: (NAME ".")? NAME
 
+// JOIN logic
+join: "JOIN" NAME "ON" col_name "=" col_name
+col_name: NAME "." NAME | NAME
+
+// Core Data Structures
 values: value ("," value)*
+assignments: assignment ("," assignment)*
 assignment: NAME "=" value
-where: "WHERE" NAME "=" value
+where_clause: "WHERE" NAME "=" value
 
 value: SIGNED_NUMBER -> number
      | STRING -> string
+     | "NULL" -> null
 
+// Tokens
 STRING: /'[^']*'/ | /"[^"]*"/
 NAME: /[a-zA-Z_][a-zA-Z0-9_]*/
 

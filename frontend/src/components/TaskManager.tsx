@@ -19,17 +19,24 @@ export default function TaskManager({ tasks, projects, onExecute }: Props) {
   const [view, setView] = useState<ViewMode>("TASKS_ONLY");
   const [panel, setPanel] = useState<PanelMode>("TASKS");
 
-  /* -----------------------------
-      FILTERING (UI-ONLY)
-  ------------------------------*/
+  const handleDelete = (id: number) => {
+    if (confirm("Delete this task?")) {
+        onExecute(`DELETE FROM tasks WHERE id = ${id}`);
+    }
+  };
+
+  const handleUpdate = (id: number, title: string, status: string) => {
+    const sql = `UPDATE tasks SET title = "${title}", status = "${status}" WHERE id = ${id}`;
+    onExecute(sql);
+  };
+
+  
   const visibleTasks =
     statusFilter === "ALL"
       ? tasks
       : tasks.filter(t => t.status === statusFilter);
 
-  /* -----------------------------
-      RENDER
-  ------------------------------*/
+  
   return (
     <div className="task-manager">
       <h2>✏️ Task Manager</h2>
@@ -41,6 +48,7 @@ export default function TaskManager({ tasks, projects, onExecute }: Props) {
         onViewChange={setView}
         onAddTask={() => setPanel("ADD_TASK")}
         onProjects={() => setPanel("PROJECTS")}
+        onExecute={onExecute}
       />
 
       {/* ADD TASK FORM */}
@@ -66,8 +74,8 @@ export default function TaskManager({ tasks, projects, onExecute }: Props) {
         <TaskTable
           tasks={visibleTasks}
           showProject={view === "TASKS_PROJECTS"}
-          onDelete={(id) =>
-            onExecute(`DELETE FROM tasks WHERE id = ${id}`)
+          onDelete={handleDelete}
+          onUpdate={handleUpdate
           }
         />
       )}
